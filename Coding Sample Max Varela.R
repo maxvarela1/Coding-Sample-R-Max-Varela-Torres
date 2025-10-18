@@ -1,13 +1,15 @@
 #Code Sample R Max Varela Torres 
 library(tidyverse)
 library(readxl)
+library(curl)
 library(httr)
 
 #Plot permanent residence applications resolved by country
-url<- "https://serviciomigraciones.cl/wp-content/uploads/estudios/Datos-abiertos/RD/RD-Resueltas-2d o-semestre-2024.zip"
-download.file(url,destfile = "data.zip") unzip("data.zip")
+url<- "https://serviciomigraciones.cl/wp-content/uploads/estudios/Datos-abiertos/RD/RD-Resueltas-2do-semestre-2024.zip"
+GET(url, write_disk("data.zip", overwrite = TRUE))
+unzip("data.zip")
 
-folder1 <- "RD-Resueltas-2000-a-2024-2do-semestre"
+folder1 <- "RD-Resueltas-2do-semestre-2024"
 im <- list.files(path=folder1,pattern="*.xlsx", full.names = T) |> lapply(read_xlsx) |>
   bind_rows()
 
@@ -26,17 +28,29 @@ applications resolved by country in Chile 2000 - 2024")+ scale_fill_brewer(palet
 
 ggsave("PRChile2000-2024.png", width=3000,height=2000,units="px")
 
-#Plot percentage of contribution of the service market to real GDP of Chile 1996 - 2024 URLGDPnom <- "https://github.com/maxvarela1/GDPnominalchile/raw/refs/heads/main/gdpcontrubution.xlsx" download.file(URLGDPnom,destfile = "GDPnom.xlsx")
-GDPnom <- read_excel("GDPnom.xlsx", skip = 1) GDPnom <- GDPnom[,-c(1,30)]
+#Plot percentage of contribution of the service market to real GDP of Chile 1996 - 2024 
 
-URLGDPdef <- "https://github.com/maxvarela1/GDPdeflatorChile/raw/refs/heads/main/GDP%20Deflator.xlsx" 
-download.file(URLGDPdef,destfile = "GDPdef.xlsx")
+curl_download(
+  "https://github.com/maxvarela1/GDPnominalchile/raw/refs/heads/main/gdpcontrubution.xlsx",
+  destfile = "GDPnom.xlsx"
+)
 
-GDPdef <- read_excel("GDPdef.xlsx", skip = 1) GDPdef <-GDPdef[,-c(1)]
+GDPnom <- read_excel("GDPnom.xlsx", skip = 1) 
+GDPnom <- GDPnom[,-c(1,30)]
+
+
+curl_download(
+  "https://github.com/maxvarela1/GDPdeflatorChile/raw/refs/heads/main/GDP%20Deflator.xlsx",
+  destfile = "GDPdef.xlsx"
+)
+
+GDPdef <- read_excel("GDPdef.xlsx", skip = 1) 
+GDPdef <-GDPdef[,-c(1)]
 
 GDPdeflatormarkets <- (GDPdef/100)
 
-GDPrealmarkets <- (GDPnom/GDPdeflatormarkets) GDPrealmarkets <- GDPrealmarkets |>
+GDPrealmarkets <- (GDPnom/GDPdeflatormarkets) 
+GDPrealmarkets <- GDPrealmarkets |>
   mutate(Years=1996:2023) |>
   mutate(servicemarket=(`23.Servicios financieros y empresariales`+`26.Servicios de vivienda e inmobiliarios`+`27.Servicios personales`+`28.Administración pública`))
 
